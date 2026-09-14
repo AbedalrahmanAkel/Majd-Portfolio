@@ -1,0 +1,37 @@
+import {
+  Briefcase,
+  Building2,
+  ChefHat,
+  Clapperboard,
+  Compass,
+  Gem,
+  HeartHandshake,
+  Mic2,
+  Presentation,
+  Rocket,
+  Settings2,
+  Sparkles,
+  TrendingUp,
+  Trophy,
+  Users,
+  type LucideIcon,
+} from "lucide-react";
+
+/** String → component registry so content.ts can stay plain data (no JSX). */
+export const iconMap: Record<string, LucideIcon> = {
+  compass: Compass,
+  gem: Gem,
+  "settings-2": Settings2,
+  users: Users,
+  sparkles: Sparkles,
+  "trending-up": TrendingUp,
+  rocket: Rocket,
+  clapperboard: Clapperboard,
+  "chef-hat": ChefHat,
+  "heart-handshake": HeartHandshake,
+  briefcase: Briefcase,
+  "building-2": Building2,
+  trophy: Trophy,
+  "mic-2": Mic2,
+  presentation: Presentation,
+};

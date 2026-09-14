@@ -1,0 +1,375 @@
+@import "tailwindcss";
+
+/* Class-based dark mode (Tailwind v4 has no config file — this is the documented v4 pattern) */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ---------------------------------------------------------------------- */
+/* Semantic color tokens — flip value between :root and .dark below.      */
+/* Components consume these (bg-canvas, text-ink, etc.), never raw hex.   */
+/* ---------------------------------------------------------------------- */
+/* Vintage red + warm cream.
+   Every ratio below is measured, not estimated; see docs/STRATEGY.md §4. */
+:root {
+  --canvas: #f7f0e6;
+  --canvas-raised: #fcf7ef;
+  --ink: #1a0e10;
+  --ink-soft: #4a2e32;
+  --muted: #6b4b4e;
+  --line: #e3d2c2;
+  --accent: #a33443;
+  --accent-soft: #f6e2dc;
+  /* Text-safe claret. Plain --accent is fine for icons, borders and large
+     type; small text always uses this darker step so it clears 4.5:1. */
+  --accent-text: #87202f;
+  /* Warmer, more orange than --accent so a form error still reads as an
+     alert rather than as brand colour. 6.20:1 on raised canvas. */
+  --error: #a8341f;
+  --shadow-premium:
+    0 1px 2px 0 rgba(26, 14, 16, 0.05), 0 16px 40px -16px rgba(26, 14, 16, 0.22);
+}
+
+.dark {
+  --canvas: #150a0d;
+  --canvas-raised: #1f1014;
+  --ink: #f3e5d6;
+  --ink-soft: #dcc7b8;
+  --muted: #ac8b86;
+  --line: #33181d;
+  --accent: #c4626c;
+  --accent-soft: #2e1319;
+  --accent-text: #dd8e8b;
+  --error: #e0897a;
+  --shadow-premium:
+    0 1px 2px 0 rgba(0, 0, 0, 0.3), 0 16px 40px -16px rgba(0, 0, 0, 0.65);
+}
+
+@theme inline {
+  /* Semantic tokens (theme-aware) */
+  --color-canvas: var(--canvas);
+  --color-canvas-raised: var(--canvas-raised);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-text: var(--accent-text);
+  --color-error: var(--error);
+  --shadow-premium: var(--shadow-premium);
+
+  /* Fonts (populated by next/font variables on <html>) */
+  --font-sans: var(--font-inter);
+  --font-display: var(--font-fraunces);
+  --font-accent: var(--font-cormorant);
+}
+
+@theme {
+  /* Fixed scales — for surfaces that stay dark in BOTH themes (the footer
+     band, the stats band, media cards sitting over photography). Because
+     they never flip, they are plain values rather than semantic tokens.
+
+     `wine` runs deep burgundy-black up to warm cream and carries surfaces
+     plus the text that sits on them. `claret` is the saturated accent ramp. */
+  --color-wine-950: #120709;
+  --color-wine-900: #1d0d11;
+  --color-wine-800: #33181d;
+  --color-wine-700: #4e262c;
+  --color-wine-600: #6b3a3f;
+  --color-wine-500: #8a5459;
+  --color-wine-400: #a97c7a;
+  --color-wine-300: #c9a79e;
+  --color-wine-200: #e2cbbc;
+  --color-wine-100: #f3e5d6;
+
+  --color-claret-50: #fbede8;
+  --color-claret-200: #ebb6ae;
+  --color-claret-300: #dd8e8b;
+  --color-claret-400: #c4626c;
+  --color-claret-500: #a33443;
+  --color-claret-600: #87202f;
+  --color-claret-700: #6b1524;
+
+  --ease-premium: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-line);
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Fixed header offset — keeps anchor-nav targets from landing underneath
+     the sticky header. */
+  section[id] {
+    scroll-margin-top: 6rem;
+  }
+
+  body {
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
+    font-feature-settings:
+      "ss01" 1,
+      "cv01" 1;
+  }
+
+  ::selection {
+    background-color: var(--color-accent);
+    color: var(--color-canvas);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 3px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer utilities {
+  /* ── Gradient surfaces ───────────────────────────────────────────────────
+   * Centralised so every large red field on the site comes from one place.
+   * All are low-contrast, atmospheric shifts within the wine ramp — the
+   * point is depth, not decoration, so text contrast is unaffected (every
+   * stop is verified against cream in docs/STRATEGY.md §4). */
+
+  /* Full-bleed dark bands: footer and the stats strip. */
+  .surface-deep {
+    background-color: var(--color-wine-950);
+    background-image:
+      radial-gradient(
+        ellipse 80% 60% at 15% 0%,
+        rgba(135, 32, 47, 0.4) 0%,
+        transparent 60%
+      ),
+      linear-gradient(
+        165deg,
+        var(--color-wine-900) 0%,
+        var(--color-wine-950) 55%,
+        #250f15 100%
+      );
+  }
+
+  /* Base beneath media/story cards — visible only at the edges of a photo
+     and while an image is still loading. */
+  .surface-card {
+    /* Explicit colour underneath the gradient, not just the gradient: these
+       cards carry cream text, so if the gradient ever fails to paint the
+       surface must still be dark or the copy becomes unreadable against the
+       light-mode canvas. */
+    background-color: var(--color-wine-950);
+    background-image: linear-gradient(
+      160deg,
+      var(--color-wine-800) 0%,
+      var(--color-wine-950) 100%
+    );
+  }
+
+  /* Hero wash. Sits behind the headline in both themes; the light-mode stop
+     is a barely-there rose tint over cream, the dark-mode one a wine glow.
+     Painted directly rather than via ::before — the host is an absolutely
+     positioned layer with no stacking context of its own, so a negative
+     z-index pseudo-element would risk dropping behind the page background. */
+  .surface-hero {
+    background-image: radial-gradient(
+      ellipse 70% 55% at 50% -10%,
+      var(--accent-soft) 0%,
+      transparent 62%
+    );
+  }
+
+  /* Faint tactile grain — static texture, not motion. Keeps large flat
+     surfaces (hero, dark sections) from feeling like a flat SaaS gradient. */
+  .bg-grain {
+    position: relative;
+    isolation: isolate;
+  }
+
+  .bg-grain::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    opacity: 0.035;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+    background-size: 160px 160px;
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Entrance for a swapped view (Photography/Videography galleries). CSS
+   * rather than JS so it runs off a keyed remount with no animation library
+   * bookkeeping, and the global reduced-motion rule neutralises it for free. */
+  @keyframes view-in {
+    from {
+      opacity: 0;
+      transform: translateY(0.75rem);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  /* `backwards`, not `both`: with `both` the finished animation keeps its
+   * final `transform` applied, and a transformed element becomes the
+   * containing block for any `position: fixed` descendant. `backwards` still
+   * holds the pre-start state during the stagger delay, but leaves no
+   * lingering transform once the animation ends. */
+  .animate-view-in {
+    animation: view-in 0.4s var(--ease-premium) backwards;
+  }
+
+  @keyframes overlay-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  .animate-overlay-in {
+    animation: overlay-in 0.25s ease-out both;
+  }
+
+  @keyframes figure-in {
+    from {
+      opacity: 0;
+      transform: scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  .animate-figure-in {
+    animation: figure-in 0.35s var(--ease-premium) both;
+  }
+
+  /* Discourages casual saving of portfolio media: kills the native image-drag
+   * ghost (which drops a copy straight into a folder) and text selection
+   * around it. Scoped to media elements only, so the rest of the page keeps
+   * normal right-click and selection behaviour.
+   *
+   * This raises friction, it does not prevent copying — anything a browser
+   * renders can ultimately be captured. */
+  .media-guard {
+    -webkit-user-drag: none;
+    -webkit-touch-callout: none;
+    user-select: none;
+  }
+
+}
+
+/* Progressive disclosure for media cards.
+ *
+ * Content is visible by default, so touch devices (which never fire hover)
+ * and screen readers always get the full story. Only pointer devices that
+ * actually support hover get the collapsed-then-reveal treatment, and
+ * `:focus-within` makes it reachable by keyboard.
+ *
+ * Deliberately unlayered: a media query nested inside `@layer utilities` is
+ * silently dropped by the Tailwind v4 pipeline, so these rules never reached
+ * the browser when they lived there. */
+@media (hover: hover) and (pointer: fine) {
+  /* Lifted out of flow and anchored to the top edge of the title block.
+   *
+   * In normal flow the detail copy sat *below* the title and pushed it
+   * upward, so each card's title landed at a different height depending on
+   * how much detail that card happened to have. Anchoring to `bottom: 100%`
+   * of the title block fixes both edges: every title sits at the same
+   * distance from the card bottom, and every detail block grows upward from
+   * that same baseline. */
+  .reveal-anchor .reveal-target {
+    position: absolute;
+    inset-inline: 0;
+    bottom: 100%;
+    padding-inline: 1.75rem;
+    padding-bottom: 0.25rem;
+    opacity: 0;
+    transform: translateY(0.5rem);
+    transition:
+      opacity 0.4s var(--ease-premium),
+      transform 0.4s var(--ease-premium);
+  }
+
+  .reveal-host:hover .reveal-target,
+  .reveal-host:focus-within .reveal-target {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ── Editorial redesign utilities ─────────────────────────────────────────
+ * Added for the magazine/editorial visual pass. No color tokens introduced
+ * here — everything below composes the existing --color-* variables into
+ * new *shapes*, so the palette itself is untouched. */
+@layer utilities {
+  /* Masthead-style nav links: no pill background, just a hairline that
+     grows in from the left on hover/focus — replaces the plain color-fade
+     links from the previous nav treatment. */
+  .link-underline {
+    position: relative;
+  }
+  .link-underline::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 100%;
+    bottom: -0.25rem;
+    height: 1px;
+    background-color: currentColor;
+    transition: right 0.3s var(--ease-premium);
+  }
+  .link-underline:hover::after,
+  .link-underline:focus-visible::after {
+    right: 0;
+  }
+
+  /* Editorial form fields: a rule, not a box — a vintage ledger/
+     registration-card feel rather than a boxed SaaS input. */
+  .field-line {
+    border-radius: 0;
+    border: none;
+    border-bottom: 1px solid var(--color-line);
+    background-color: transparent;
+    padding-inline: 0.125rem;
+    transition: border-color 0.2s ease;
+  }
+  .field-line:focus {
+    outline: none;
+    border-bottom-color: var(--color-accent-text);
+  }
+
+  /* Large, low-opacity outlined index numeral set beside section kickers.
+     Decorative only — every use carries aria-hidden, the real label is the
+     kicker text next to it. */
+  .numeral-ghost {
+    font-family: var(--font-display);
+    font-weight: 500;
+    line-height: 0.9;
+    color: transparent;
+    -webkit-text-stroke: 1px var(--color-accent);
+    opacity: 0.35;
+  }
+}
